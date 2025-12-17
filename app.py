@@ -1,82 +1,31 @@
 import streamlit as st
-import pandas as pd
 
-st.set_page_config(page_title="Marks Increase / Decrease", layout="wide")
-st.title("📊 Student Marks Increase / Decrease Analysis")
+st.set_page_config(page_title="Marks Change Calculator", layout="wide")
+st.title("📊 Marks Increase / Decrease Based on User Input")
 
 # ---------- USER INPUT ----------
-st.sidebar.header("🔧 Student Input")
+st.sidebar.header("🔧 Enter Two Years and Marks")
 
-student_name = st.sidebar.text_input("Student Name", "Aarav")
+year1 = st.sidebar.number_input("Year 1", min_value=1900, max_value=2100, value=2023)
+marks1 = st.sidebar.number_input("Marks in Year 1", min_value=0, max_value=100, value=60)
 
-start_year = st.sidebar.number_input(
-    "Starting Academic Year",
-    min_value=2000,
-    max_value=2100,
-    value=2010
-)
-
-num_years = st.sidebar.slider(
-    "Number of Academic Years",
-    5, 50, 10
-)
-
-first_year_marks = st.sidebar.slider(
-    "Marks in First Year",
-    0, 100, 60
-)
-
-# ---------- GENERATE DATA ----------
-academic_years = []
-marks_list = []
-
-marks = first_year_marks
-
-for i in range(num_years):
-    year = start_year + i
-    academic_years.append(f"{year}-{year+1}")
-
-    # Increase / Decrease logic
-    if i == 0:
-        marks = first_year_marks
-    elif i % 2 == 0:
-        marks = min(100, marks + 5)   # increase
-    else:
-        marks = max(0, marks - 3)     # decrease
-
-    marks_list.append(marks)
-
-df = pd.DataFrame({
-    "Student_Name": student_name,
-    "Academic_Year": academic_years,
-    "Marks": marks_list
-})
+year2 = st.sidebar.number_input("Year 2", min_value=1900, max_value=2100, value=2024)
+marks2 = st.sidebar.number_input("Marks in Year 2", min_value=0, max_value=100, value=70)
 
 # ---------- CALCULATE CHANGE ----------
-df["Change"] = df["Marks"].diff()
-df["Result"] = df["Change"].apply(
-    lambda x: "⬆ Increase" if x > 0 else ("⬇ Decrease" if x < 0 else "➖ No Change")
-)
+change = marks2 - marks1
+percent_change = (change / marks1) * 100 if marks1 != 0 else 0
 
-# ---------- DISPLAY ----------
-st.subheader("📄 Year-wise Marks")
-st.dataframe(df, use_container_width=True)
+if change > 0:
+    status = "⬆ Increased"
+elif change < 0:
+    status = "⬇ Decreased"
+else:
+    status = "➖ No Change"
 
-# ---------- YEAR SELECTION ----------
-selected_year = st.selectbox(
-    "📌 Select Academic Year to See Result",
-    df["Academic_Year"]
-)
-
-row = df[df["Academic_Year"] == selected_year].iloc[0]
-
-st.subheader("📢 Selected Year Result")
-st.write("**Academic Year:**", selected_year)
-st.write("**Marks:**", row["Marks"])
-st.write("**Status:**", row["Result"])
-
-# ---------- GRAPH ----------
-df["Year_Start"] = df["Academic_Year"].str.split("-").str[0].astype(int)
-
-st.subheader("📈 Marks Trend")
-st.line_chart(df.set_index("Year_Start")["Marks"])
+# ---------- DISPLAY RESULT ----------
+st.subheader("📌 Result Between Two Years")
+st.write(f"**Year 1:** {year1}, Marks: {marks1}")
+st.write(f"**Year 2:** {year2}, Marks: {marks2}")
+st.write(f"**Change in Marks:** {change} ({percent_change:.2f}%)")
+st.write(f"**Status:** {status}")
