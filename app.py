@@ -1,57 +1,62 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Student Academic Performance", layout="wide")
-st.title("📊 Student Academic Year Marks – User Input App")
+st.set_page_config(page_title="Year-wise Marks Change", layout="wide")
+st.title("📊 Student Marks – Increase / Decrease Analysis")
 
-st.sidebar.header("🔧 Enter Student Details")
+# -------- USER INPUT --------
+st.sidebar.header("🔧 Student & Year Input")
 
-# -------- USER INPUTS --------
 student_name = st.sidebar.text_input("Student Name", "Aarav")
-student_id = st.sidebar.number_input("Student ID", min_value=1, value=1)
+start_year = st.sidebar.number_input("Starting Year", min_value=2000, max_value=2100, value=2010)
+num_years = st.sidebar.slider("Number of Academic Years", 5, 50, 15)
+base_marks = st.sidebar.slider("Marks in First Year", 0, 100, 60)
 
-num_years = st.sidebar.slider("Number of Academic Years", min_value=5, max_value=200, value=50)
-start_year = st.sidebar.number_input("Starting Academic Year", min_value=1900, max_value=2100, value=2000)
-start_marks = st.sidebar.slider("Starting Marks", min_value=0, max_value=100, value=50)
+# -------- GENERATE DATA --------
+years = []
+marks = []
 
-# -------- DATA GENERATION --------
-data = {
-    "Student_ID": [],
-    "Student_Name": [],
-    "Academic_Year": [],
-    "Marks": []
-}
-
-marks = start_marks
+current_marks = base_marks
 
 for i in range(num_years):
-    year_start = start_year + i
-    year_end = year_start + 1
-    academic_year = f"{year_start}-{year_end}"
+    year = start_year + i
+    change = (-3 if i % 4 == 0 else 5)   # decrease sometimes, increase sometimes
+    current_marks = max(0, min(100, current_marks + change))
 
-    marks = min(100, marks + (i % 3))  # gradual increase
+    years.append(f"{year}-{year+1}")
+    marks.append(current_marks)
 
-    data["Student_ID"].append(student_id)
-    data["Student_Name"].append(student_name)
-    data["Academic_Year"].append(academic_year)
-    data["Marks"].append(marks)
+df = pd.DataFrame({
+    "Academic_Year": years,
+    "Marks": marks
+})
 
-df = pd.DataFrame(data)
+# -------- CALCULATE CHANGE --------
+df["Change"] = df["Marks"].diff()
+df["Status"] = df["Change"].apply(
+    lambda x: "⬆ Increase" if x > 0 else ("⬇ Decrease" if x < 0 else "➖ No Change")
+)
 
-# -------- DISPLAY DATA --------
-st.subheader("📄 Student Academic Data")
+# -------- DISPLAY --------
+st.subheader("📄 Academic Year Marks")
 st.dataframe(df, use_container_width=True)
 
-# -------- PREPARE FOR PLOT --------
+# -------- USER SELECT YEAR --------
+selected_year = st.selectbox("📌 Select Academic Year to Check Change", df["Academic_Year"])
+
+row = df[df["Academic_Year"] == selected_year].iloc[0]
+
+st.subheader("📢 Result")
+if pd.isna(row["Change"]):
+    st.info("This is the first academic year. No previous data.")
+else:
+    st.write(f"**Academic Year:** {selected_year}")
+    st.write(f"**Marks:** {row['Marks']}")
+    st.write(f"**Change from Previous Year:** {int(row['Change'])}")
+    st.write(f"**Status:** {row['Status']}")
+
+# -------- CHART --------
 df["Year_Start"] = df["Academic_Year"].str.split("-").str[0].astype(int)
 
-st.subheader("📈 Academic Year vs Marks")
+st.subheader("📈 Marks Trend")
 st.line_chart(df.set_index("Year_Start")["Marks"])
-
-# -------- SUMMARY --------
-st.subheader("📌 Performance Summary")
-st.write("**Student Name:**", student_name)
-st.write("**Total Academic Years:**", num_years)
-st.write("**Average Marks:**", round(df["Marks"].mean(), 2))
-st.write("**Highest Marks:**", df["Marks"].max())
-st.write("**Lowest Marks:**", df["Marks"].min())
