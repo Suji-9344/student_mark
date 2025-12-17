@@ -1,60 +1,31 @@
 import streamlit as st
-import pandas as pd
-from scipy.stats import linregress
 
-# ---------------- PAGE CONFIG ----------------
-st.set_page_config(page_title="📈 Time Series Marks Analysis", layout="wide")
-st.title("📊 Student Marks Time Series Analysis (SciPy)")
+st.set_page_config(page_title="Marks Change Calculator", layout="wide")
+st.title("📊 Marks Increase / Decrease Based on User Input")
 
-# ---------------- SIDEBAR INPUT ----------------
-st.sidebar.header("🔧 Enter Student Marks Over Years")
+# ---------- USER INPUT ----------
+st.sidebar.header("🔧 Enter Two Years and Marks")
 
-years = st.sidebar.text_input(
-    "Enter Years (comma separated)",
-    "2016,2017,2018,2019,2020,2021,2022,2023"
-)
+year1 = st.sidebar.number_input("Year 1", min_value=1900, max_value=2100, value=2023)
+marks1 = st.sidebar.number_input("Marks in Year 1", min_value=0, max_value=100, value=60)
 
-marks = st.sidebar.text_input(
-    "Enter Marks (comma separated)",
-    "64,65,66,67,68,69,70,65"
-)
+year2 = st.sidebar.number_input("Year 2", min_value=1900, max_value=2100, value=2024)
+marks2 = st.sidebar.number_input("Marks in Year 2", min_value=0, max_value=100, value=70)
 
-try:
-    year_list = list(map(int, years.split(",")))
-    mark_list = list(map(int, marks.split(",")))
+# ---------- CALCULATE CHANGE ----------
+change = marks2 - marks1
+percent_change = (change / marks1) * 100 if marks1 != 0 else 0
 
-    if len(year_list) != len(mark_list):
-        st.error("❌ Years and Marks count must be same")
-        st.stop()
+if change > 0:
+    status = "⬆ Increased"
+elif change < 0:
+    status = "⬇ Decreased"
+else:
+    status = "➖ No Change"
 
-    df = pd.DataFrame({
-        "Year": year_list,
-        "Marks": mark_list
-    })
-
-    # ---------------- DISPLAY DATA ----------------
-    st.subheader("📄 Time Series Data")
-    st.dataframe(df)
-
-    # ---------------- STREAMLIT LINE CHART ----------------
-    st.subheader("📈 Marks Trend Over Time")
-    st.line_chart(df.set_index("Year"))
-
-    # ---------------- SCIPY TREND ANALYSIS ----------------
-    slope, intercept, r_value, p_value, std_err = linregress(df["Year"], df["Marks"])
-
-    st.subheader("📊 SciPy Trend Result")
-
-    if slope > 0:
-        st.success("⬆ Overall Trend: INCREASING")
-    elif slope < 0:
-        st.error("⬇ Overall Trend: DECREASING")
-    else:
-        st.info("➖ Overall Trend: NO CHANGE")
-
-    st.write(f"**Slope:** {slope:.2f}")
-    st.write(f"**Correlation (R):** {r_value:.2f}")
-    st.write(f"**P-value:** {p_value:.4f}")
-
-except:
-    st.error("❌ Please enter valid numeric values only")
+# ---------- DISPLAY RESULT ----------
+st.subheader("📌 Result Between Two Years")
+st.write(f"*Year 1:* {year1}, Marks: {marks1}")
+st.write(f"*Year 2:* {year2}, Marks: {marks2}")
+st.write(f"*Change in Marks:* {change} ({percent_change:.2f}%)")
+st.write(f"*Status:* {status}")
