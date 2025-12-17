@@ -1,44 +1,57 @@
 import streamlit as st
 import pandas as pd
-import os
 
 st.set_page_config(page_title="Student Academic Performance", layout="wide")
-st.title("📊 One Student – Academic Year Marks Analysis")
+st.title("📊 Student Academic Year Marks – User Input App")
 
-FILE_NAME = "one_student_200_academic_year_marks.xlsx"
+st.sidebar.header("🔧 Enter Student Details")
 
-def generate_data():
-    data = {
-        "Student_ID": [1] * 200,
-        "Student_Name": ["Aarav"] * 200,
-        "Academic_Year": [f"{1825+i}-{1826+i}" for i in range(200)],
-        "Marks": [(50 + i) % 100 for i in range(200)]
-    }
-    df = pd.DataFrame(data)
-    df.to_excel(FILE_NAME, index=False)
-    return df
+# -------- USER INPUTS --------
+student_name = st.sidebar.text_input("Student Name", "Aarav")
+student_id = st.sidebar.number_input("Student ID", min_value=1, value=1)
 
-# Load or create dataset automatically
-if os.path.exists(FILE_NAME):
-    df = pd.read_excel(FILE_NAME)
-else:
-    df = generate_data()
+num_years = st.sidebar.slider("Number of Academic Years", min_value=5, max_value=200, value=50)
+start_year = st.sidebar.number_input("Starting Academic Year", min_value=1900, max_value=2100, value=2000)
+start_marks = st.sidebar.slider("Starting Marks", min_value=0, max_value=100, value=50)
 
-# Show data
+# -------- DATA GENERATION --------
+data = {
+    "Student_ID": [],
+    "Student_Name": [],
+    "Academic_Year": [],
+    "Marks": []
+}
+
+marks = start_marks
+
+for i in range(num_years):
+    year_start = start_year + i
+    year_end = year_start + 1
+    academic_year = f"{year_start}-{year_end}"
+
+    marks = min(100, marks + (i % 3))  # gradual increase
+
+    data["Student_ID"].append(student_id)
+    data["Student_Name"].append(student_name)
+    data["Academic_Year"].append(academic_year)
+    data["Marks"].append(marks)
+
+df = pd.DataFrame(data)
+
+# -------- DISPLAY DATA --------
 st.subheader("📄 Student Academic Data")
 st.dataframe(df, use_container_width=True)
 
-# Prepare year for plotting
-df["Year_Start"] = df["Academic_Year"].astype(str).str.split("-").str[0].astype(int)
+# -------- PREPARE FOR PLOT --------
+df["Year_Start"] = df["Academic_Year"].str.split("-").str[0].astype(int)
 
-# Plot
 st.subheader("📈 Academic Year vs Marks")
 st.line_chart(df.set_index("Year_Start")["Marks"])
 
-# Summary
+# -------- SUMMARY --------
 st.subheader("📌 Performance Summary")
-st.write("**Student Name:**", df["Student_Name"].iloc[0])
-st.write("**Total Academic Years:**", len(df))
+st.write("**Student Name:**", student_name)
+st.write("**Total Academic Years:**", num_years)
 st.write("**Average Marks:**", round(df["Marks"].mean(), 2))
 st.write("**Highest Marks:**", df["Marks"].max())
 st.write("**Lowest Marks:**", df["Marks"].min())
