@@ -1,36 +1,29 @@
 import streamlit as st
 import pandas as pd
 
-# Page config
 st.set_page_config(page_title="Student Academic Performance", layout="wide")
 
 st.title("📊 One Student – Academic Year Marks Analysis")
 
-# Load Excel file
-@st.cache_data
-def load_data():
-    df = pd.read_excel("one_student_200_academic_year_marks.xlsx")
-    return df
+# Upload Excel file
+uploaded_file = st.file_uploader(
+    "📂 Upload Excel file (one_student_200_academic_year_marks.xlsx)",
+    type=["xlsx"]
+)
 
-try:
-    df = load_data()
+if uploaded_file is not None:
+    # Read Excel
+    df = pd.read_excel(uploaded_file)
 
-    # Show dataset
     st.subheader("📄 Student Academic Data")
     st.dataframe(df)
 
-    # Convert Academic Year for plotting
-    df["Year_Start"] = df["Academic_Year"].str.split("-").str[0].astype(int)
+    # Extract starting year for plotting
+    df["Year_Start"] = df["Academic_Year"].astype(str).str.split("-").str[0].astype(int)
 
-    # Line chart
     st.subheader("📈 Academic Year vs Marks")
-    st.line_chart(
-        data=df,
-        x="Year_Start",
-        y="Marks"
-    )
+    st.line_chart(df.set_index("Year_Start")["Marks"])
 
-    # Summary
     st.subheader("📌 Performance Summary")
     st.write("**Student Name:**", df["Student_Name"].iloc[0])
     st.write("**Total Academic Years:**", len(df))
@@ -38,5 +31,5 @@ try:
     st.write("**Highest Marks:**", df["Marks"].max())
     st.write("**Lowest Marks:**", df["Marks"].min())
 
-except FileNotFoundError:
-    st.error("❌ Excel file not found. Please upload 'one_student_200_academic_year_marks.xlsx' to the project folder.")
+else:
+    st.info("⬆️ Please upload the Excel file to continue")
