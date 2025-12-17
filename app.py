@@ -1,12 +1,10 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 from scipy.stats import linregress
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="📈 Time Series Marks Analysis", layout="wide")
-st.title("📊 Student Marks Time Series Analysis (Using SciPy)")
+st.title("📊 Student Marks Time Series Analysis (SciPy)")
 
 # ---------------- SIDEBAR INPUT ----------------
 st.sidebar.header("🔧 Enter Student Marks Over Years")
@@ -21,13 +19,12 @@ marks = st.sidebar.text_input(
     "64,65,66,67,68,69,70,65"
 )
 
-# ---------------- PROCESS INPUT ----------------
 try:
     year_list = list(map(int, years.split(",")))
     mark_list = list(map(int, marks.split(",")))
 
     if len(year_list) != len(mark_list):
-        st.error("❌ Number of years and marks must be the same")
+        st.error("❌ Years and Marks count must be same")
         st.stop()
 
     df = pd.DataFrame({
@@ -39,19 +36,14 @@ try:
     st.subheader("📄 Time Series Data")
     st.dataframe(df)
 
-    # ---------------- PLOT TIME SERIES ----------------
+    # ---------------- STREAMLIT LINE CHART ----------------
     st.subheader("📈 Marks Trend Over Time")
-    fig, ax = plt.subplots()
-    ax.plot(df["Year"], df["Marks"], marker="o")
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Marks")
-    ax.set_title("Student Marks Time Series")
-    st.pyplot(fig)
+    st.line_chart(df.set_index("Year"))
 
     # ---------------- SCIPY TREND ANALYSIS ----------------
     slope, intercept, r_value, p_value, std_err = linregress(df["Year"], df["Marks"])
 
-    st.subheader("📊 SciPy Trend Analysis Result")
+    st.subheader("📊 SciPy Trend Result")
 
     if slope > 0:
         st.success("⬆ Overall Trend: INCREASING")
@@ -64,5 +56,5 @@ try:
     st.write(f"**Correlation (R):** {r_value:.2f}")
     st.write(f"**P-value:** {p_value:.4f}")
 
-except Exception as e:
+except:
     st.error("❌ Please enter valid numeric values only")
